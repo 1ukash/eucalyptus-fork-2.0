@@ -1,0 +1,419 @@
+#!/bin/bash
+#Copyright (c) 2009  Eucalyptus Systems, Inc.	
+#
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by 
+#the Free Software Foundation, only version 3 of the License.  
+# 
+#This file is distributed in the hope that it will be useful, but WITHOUT
+#ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+#for more details.  
+#
+#You should have received a copy of the GNU General Public License along
+#with this program.  If not, see <http://www.gnu.org/licenses/>.
+# 
+#Please contact Eucalyptus Systems, Inc., 130 Castilian
+#Dr., Goleta, CA 93101 USA or visit <http://www.eucalyptus.com/licenses/> 
+#if you need additional information or have any questions.
+#
+#This file may incorporate work covered under the following copyright and
+#permission notice:
+#
+#  Software License Agreement (BSD License)
+#
+#  Copyright (c) 2008, Regents of the University of California
+#  
+#
+#  Redistribution and use of this software in source and binary forms, with
+#  or without modification, are permitted provided that the following
+#  conditions are met:
+#
+#    Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+#    Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+#  IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+#  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+#  PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+#  OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+#  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+#  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+#  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+#  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. USERS OF
+#  THIS SOFTWARE ACKNOWLEDGE THE POSSIBLE PRESENCE OF OTHER OPEN SOURCE
+#  LICENSED MATERIAL, COPYRIGHTED MATERIAL OR PATENTED MATERIAL IN THIS
+#  SOFTWARE, AND IF ANY SUCH MATERIAL IS DISCOVERED THE PARTY DISCOVERING
+#  IT MAY INFORM DR. RICH WOLSKI AT THE UNIVERSITY OF CALIFORNIA, SANTA
+#  BARBARA WHO WILL THEN ASCERTAIN THE MOST APPROPRIATE REMEDY, WHICH IN
+#  THE REGENTS’ DISCRETION MAY INCLUDE, WITHOUT LIMITATION, REPLACEMENT
+#  OF THE CODE SO IDENTIFIED, LICENSING OF THE CODE SO IDENTIFIED, OR
+#  WITHDRAWAL OF THE CODE CAPABILITY TO THE EXTENT NEEDED TO COMPLY WITH
+#  ANY SUCH LICENSES OR RIGHTS.
+#
+
+#
+# chkconfig: 2345 99 05
+# description: script for starting and stopping eucalyptus java ws services
+#
+### BEGIN INIT INFO
+# Provides:                   eucalyptus
+# Required-Start:             $remote_fs $syslog 
+# Should-Start:               START
+# Required-Stop:              $remote_fs $syslog 
+# Default-Start:              2 3 4 5
+# Default-Stop:	              0 1 6
+# Short-Description:          Start Eucalyptus 
+# Description:                Start the Eucalyptus services
+# X-UnitedLinux-Default-Enabled: yes
+### END INIT INFO
+#
+
+# Do NOT "set -e"
+
+# we need to source the current path in case of manual intallation
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:$PATH
+DESC="Eucalyptus services"
+NAME=""
+ANT="`which ant 2> /dev/null`"
+JAVA="`which java 2> /dev/null`"
+EUCA_USER="eucalyptus"
+
+# available services
+WALRUS_WS="N"
+CLOUD_WS="N"
+STORAGE_WS="N"
+
+if [ "$EUID" != "0" ]; then
+	echo "Eucalyptus init scripts must be run as root."
+	exit 1
+fi
+
+# if we have lsb functions let's source them
+WE_HAVE_LSB="N"
+if [ -e /lib/lsb/init-functions ]; then
+	. /lib/lsb/init-functions
+	# very old lsb don't have the functions we need
+	if type log_daemon_msg > /dev/null 2> /dev/null ; then
+		WE_HAVE_LSB="Y"
+	fi
+fi
+
+# honor the ENV variable if found otherwise look in root
+if [ -z "$EUCALYPTUS" ] ; then
+       EUCALYPTUS="@prefix@"
+       if [ ! -e ${EUCALYPTUS}/etc/eucalyptus/eucalyptus.conf ] ; then 
+              EUCALYPTUS="/"
+       fi
+fi
+
+# Read configuration variable file if it is present
+if [ -r $EUCALYPTUS/etc/eucalyptus/eucalyptus.conf ]; then
+	EUCA_TMP="`readlink -f ${EUCALYPTUS}`"
+	. $EUCALYPTUS/etc/eucalyptus/eucalyptus.conf
+
+	# has eucalyptus been configured?
+	if [ "$EUCALYPTUS" = "not_configured" ]; then
+		echo "EUCALYPTUS not configured!" 
+		exit 1
+	fi
+
+	# there may be inconsistencied between conf file and env variable
+	if [ "$EUCA_TMP" != "`readlink -f ${EUCALYPTUS}`" ]; then
+		echo "Warning: you should check EUCALYPTUS in conf file"
+	fi
+else
+	# on removal of RPM we can get in a state in which the conf file
+	# is gone but the services are still running: make this hard
+	# failure only if we are not stopping
+	echo "Cannot find eucalyptus configuration file!"
+	if [ "$1" != "stop" ]; then
+		exit 1
+	fi
+fi
+export EUCALYPTUS
+
+pidfile=$EUCALYPTUS/var/run/eucalyptus/eucalyptus-cloud.pid
+
+# read in the services which should be running
+read_ws_list() {
+	STORAGE_WS="N"
+	WALRUS_WS="N"
+	CLOUD_WS="N"	
+	NAME=""
+
+	for x in `cat $EUCALYPTUS/var/lib/eucalyptus/services 2> /dev/null` ; do
+		case $x in
+		walrus)
+			WALRUS_WS="Y"
+			NAME="walrus $NAME"
+			;;
+		sc) 
+			STORAGE_WS="Y"
+			NAME="sc $NAME"
+			;;
+		cloud)
+			CLOUD_WS="Y"
+			NAME="cloud $NAME"
+			;;
+		*)
+			echo "Unknown service! ($x)"
+			;;
+		esac
+	done
+}
+
+check_java() {
+	java_min_version="1.6.0"
+
+	# we need a good JAVA_HOME
+	if [ -z "$JAVA_HOME" ]; then
+		# user didn't setup JAVA_HOME, let's look for it
+		if [ -z "$JAVA" ]; then
+			echo "Cannot find java!"
+			exit 1
+		fi
+		JAVA_HOME="`readlink -f $JAVA`"
+		JAVA_HOME="`dirname $JAVA_HOME|sed 's:/jre/bin::'`"
+		if [ ! -d $JAVA_HOME ]; then
+			echo "Cannot find a good JAVA_HOME"
+			exit 1
+		fi
+	fi
+	
+	# to be sure we are using the right java/JAVA_HOME
+	JAVA="$JAVA_HOME/jre/bin/java"
+
+	# let's see if we can find a decent java
+	if [ -x "$JAVA" ]; then
+		java_version=`$JAVA -version 2>&1 | grep "java version" | sed -e 's/.*java version "\(.*\)".*/\1/'`
+		if [ `expr $java_version "<" $java_min_version` -eq 0 ]; then
+			export JAVA_HOME
+			return 
+		fi
+	fi
+
+	echo "Eucalyptus needs java version >= $java_min_version"
+	exit 1
+}
+
+do_start() {
+	if [ -z "$CLOUD_OPTS" ]; then
+		local CLOUD_OPTS="--log-level=TRACE"
+	fi
+
+	# basic checks
+	if [ ! -x $EUCALYPTUS/usr/sbin/euca_conf ]; then
+		echo "Some eucalyptus components are missing"
+		exit 1
+	fi
+
+	check_java
+	
+	cd $EUCALYPTUS/etc/eucalyptus
+
+	# options from the configuration file
+	if [ "$DISABLE_DNS" != "N" ]; then
+		CLOUD_OPTS="$CLOUD_OPTS --remote-dns"
+	fi
+	if [ "$DISABLE_EBS" = "Y" ]; then
+		CLOUD_OPTS="$CLOUD_OPTS --disable-storage"
+	fi
+	if [ "$DISABLE_ISCSI" != "N" ]; then
+		CLOUD_OPTS="$CLOUD_OPTS --disable-iscsi"
+	fi
+
+	# enabled services
+	if [ "$STORAGE_WS" != "Y" ]; then
+		if [ "$DISABLE_EBS" != "Y" ]; then
+			CLOUD_OPTS="$CLOUD_OPTS --disable-storage"
+		fi
+	else
+		if [ "$DISABLE_EBS" = "Y" ]; then
+			echo "DISABLE_EBS is set in eucalyptus.conf: not starting the sc"
+		else
+			if ! $EUCALYPTUS/usr/sbin/euca_conf --check sc ; then
+				exit 1
+			fi
+		fi
+	fi
+	if [ "$WALRUS_WS" != "Y" ]; then
+		CLOUD_OPTS="$CLOUD_OPTS --disable-walrus"
+	else
+		if ! $EUCALYPTUS/usr/sbin/euca_conf --check walrus ; then
+			exit 1
+		fi
+	fi
+	if [ "$CLOUD_WS" != "Y" ]; then
+		CLOUD_OPTS="$CLOUD_OPTS --disable-cloud"
+	else
+		if ! $EUCALYPTUS/usr/sbin/euca_conf --check cloud ; then
+			exit 1
+		fi
+	fi
+
+	if [ "${STORAGE_WS}${CLOUD_WS}${WALRUS_WS}" = "NNN" ]; then
+		# nothing to start
+		NAME="none"
+		return 0
+	fi
+
+    # try log4j for a bit, see if anyone panics. $EUCALYPTUS/usr/sbin/eucalyptus-cloud $CLOUD_OPTS -h $EUCALYPTUS -u $EUCA_USER --pidfile ${pidfile} -f -o $EUCALYPTUS/var/log/eucalyptus/cloud-output.log >/dev/null 2>&1
+	$EUCALYPTUS/usr/sbin/eucalyptus-cloud $CLOUD_OPTS -h $EUCALYPTUS -u $EUCA_USER --pidfile ${pidfile} -f -L console-log >/dev/null 2>&1
+
+	return $?
+}
+
+do_status() {
+	if [ -s ${pidfile} ]; then
+		pid=`cat ${pidfile} 2> /dev/null`
+		if ! ps axww|grep $pid|grep eucalyptus-cloud.pid > /dev/null; then
+			# pid file is not matching
+			rm -f ${pidfile}
+			return 1
+		fi
+	else
+		# no pidfile, no running services
+		return 1
+	fi
+
+	return $?
+}
+
+do_stop() {
+	# now stop the service
+	if [ -s "${pidfile}" ]; then
+		pid=`cat $pidfile 2> /dev/null`
+		kill $pid > /dev/null 2>&1
+	else
+		return
+	fi
+
+	# let's way few seconds than kill harder
+	timeout=20
+	while [ $timeout -gt 0 ]; do
+		if do_status ; then
+			sleep 1
+			timeout=$(($timeout - 1))
+		else
+			break
+		fi
+	done
+	if [ $timeout -eq 0 ]; then
+		kill -9 $pid > /dev/null 2>&1 
+	fi
+	rm -f $pidfile
+
+}
+
+# let's get the user to use
+if [ -z "$EUCA_USER" ] ; then
+	EUCA_USER="root"
+fi
+
+# set the library path correctly
+export LD_LIBRARY_PATH="$EUCALYPTUS/usr/lib/eucalyptus"
+#VERBOSE="yes"
+
+# read services to start
+read_ws_list
+
+case "$1" in
+  start)
+	if [ "$VERBOSE" != no ]; then
+		if [ "$WE_HAVE_LSB" = "Y" ]; then
+			log_daemon_msg "Starting $DESC" "$NAME"
+		else
+			echo -n "Starting $DESC: $NAME"
+		fi
+	fi
+
+	# let's check there is no previous cloud running
+	if do_status ; then
+		echo
+		echo "another $DESC is already running!"
+		if [ "$VERBOSE" != no ]; then
+			if [ "$WE_HAVE_LSB" = "Y" ]; then
+				log_end_msg 1
+			fi
+		fi
+		exit 0
+	fi
+
+	do_start
+
+	case "$?" in
+	0|1) 
+		if [ "$VERBOSE" != no ]; then
+			if [ "$WE_HAVE_LSB" = "Y" ]; then
+				log_end_msg 0
+			else
+				echo "done."
+			fi
+		fi
+		;;
+	*)
+		if [ "$VERBOSE" != no ]; then
+			if [ "$WE_HAVE_LSB" = "Y" ]; then
+				log_end_msg 1
+			else
+				echo "failed!"
+			fi
+		fi
+		;;
+	esac
+	;;
+  stop)
+	if [ "$VERBOSE" != no ]; then
+		if [ "$WE_HAVE_LSB" = "Y" ]; then
+			log_daemon_msg "Stopping $DESC" "$NAME"
+		else
+			echo -n "Stopping $DESC: $NAME"
+		fi
+	fi
+	
+	# let's check there is a previous cloud running
+	if ! do_status ; then
+		echo
+		echo "no $DESC is running!"
+		if [ "$VERBOSE" != no ]; then
+			if [ "$WE_HAVE_LSB" = "Y" ]; then
+				log_end_msg 1
+			fi
+		fi
+		exit 0
+	fi
+
+	do_stop
+
+	if [ "$VERBOSE" != no ]; then
+		if [ "$WE_HAVE_LSB" = "Y" ]; then
+			log_end_msg 0
+		else
+			echo "done."
+		fi
+	fi
+	;;
+  restart)
+	$0 stop
+	$0 start
+  	;;
+  status)
+	if do_status ; then
+		echo "$DESC ($NAME) is/are running"
+	else
+		exit 3
+	fi
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}" >&2
+	exit 3
+	;;
+esac
+

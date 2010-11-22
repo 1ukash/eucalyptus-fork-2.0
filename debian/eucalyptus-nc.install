@@ -1,0 +1,10 @@
+/usr/share/eucalyptus/gen_libvirt_xml
+/usr/share/eucalyptus/gen_kvm_libvirt_xml
+/usr/share/eucalyptus/partition2disk
+/usr/share/eucalyptus/get_xen_info
+/usr/share/eucalyptus/get_sys_info
+/usr/share/eucalyptus/detach.pl
+/usr/sbin/euca_test_nc
+/usr/lib/axis2/services/EucalyptusNC
+/etc/init.d/eucalyptus-nc
+
