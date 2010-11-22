@@ -37,3 +37,14 @@ kernel patching or module additions to the host OS domain.
 For more information and complete documentation, please visit our
 website (http://open.eucalyptus.com).
 
+
+	EUCALYPTUS - Saint-Petersburg State University version
+
+Eucalyptus was forked by SPbSTU cloud laboratory team to perform patches, 
+changes and improvements for eucalyptus open source project. Our team is open
+for communication and we would like to improve project as well. New fork was placed
+to open github repository because of we very like git as VCS. Github URL is 
+https://github.com/1ukash/eucalyptus-fork-2.0 . Please note, that git repo contains archived
+bazaar repo folder for merging our changes with eucalyptus team.
+For any information, questions, etc please contact lukash@neva.ru.
+
