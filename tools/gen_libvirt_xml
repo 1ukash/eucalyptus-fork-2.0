@@ -74,11 +74,18 @@ $OUTPUT_AUTOFLUSH = 1; # no output buffering
 
 our $use_ramdisk = 0;
 our $use_ephemeral = 0;
-
+our $disk_path = "";
+our $parted_result = "";
 # deal with command-line parameters
 GetOptions('ramdisk'        => sub { $use_ramdisk = 1; },
            'ephemeral'      => sub { $use_ephemeral = 1; }
 		   ) or exit (1);
+if ($ARGV[0] eq "--instance_path")
+	$disk_path = $ARGV[1];
+$parted_result = `parted -s $disk_path/root print`;
+
+if (($parted_result =~ /ext3/) || ($parted_result =~ /ext4/))
+{
 
 print <<EOF;
 <domain type='xen' id='18'>
@@ -127,3 +134,53 @@ print <<EOF;
     </devices>
 </domain>
 EOF
+}
+
+else
+# start for Windows or FreeBSD
+{
+print <<EOF;
+<domain type='xen' id='18'>
+    <name>NAME</name>
+    <os>
+    	<type>hvm</type>
+	<loader>/usr/lib/xen/boot/hvmloader</loader>
+	<boot dev='hd'/>
+    </os>
+    <memory>MEMORY</memory>
+    <vcpu>VCPUS</vcpu>
+    <features>
+	<acpi/>
+	<apic/>
+	<pae/>
+    </features>
+	<on_poweroff>destroy</on_poweroff>
+	<on_reboot>restart</on_reboot>
+	<on_crash>restart</on_crash>
+    <devices>
+	<emulator>/usr/lib64/xen/bin/qemu-dm</emulator>
+        <disk type='file'>
+            <source file='BASEPATH/root'/>
+            <target dev='hda' bus='ide'/>
+        </disk>
+        <interface type='bridge'>
+            <source bridge='BRIDGEDEV'/>
+            <mac address='PRIVMACADDR'/>
+            <script path='/etc/xen/scripts/vif-bridge'/>
+        </interface>
+	<serial type='pty'>
+		<source path='/dev/pts/2'/>
+		<target port='0'/>
+	</serial>
+	<console type='pty' tty='/dev/pts/2'>
+		<source path='/dev/pts/2'/>
+		<target port='0'/>
+	</console>
+	<input type='tablet' bus='usb'/>
+	<input type='mouse' bus='ps2'/>
+	<graphics type='vnc' port='5901' autoport='yes' keymap='ru'/>
+    </devices>
+</domain>
+EOF
+
+}

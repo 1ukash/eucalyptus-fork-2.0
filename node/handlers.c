@@ -382,10 +382,8 @@ get_instance_xml(	const char *gen_libvirt_cmd_path,
     char buf [MAX_PATH];
 
     snprintf(buf, MAX_PATH, "%s", gen_libvirt_cmd_path);
-//start iroshupkin
-	strncat(buf, " --instance_path ", MAX_PATH);
-	strncat(buf, disk_path, MAX_PATH);
-//end iroshupkin
+    strncat(buf, " --instance_path ", MAX_PATH);
+    strncat(buf, disk_path, MAX_PATH);
     if (strnlen(ramdiskId, CHAR_BUFFER_SIZE)) {
         strncat(buf, " --ramdisk", MAX_PATH);
     }
