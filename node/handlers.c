@@ -382,8 +382,13 @@ get_instance_xml(	const char *gen_libvirt_cmd_path,
     char buf [MAX_PATH];
 
     snprintf(buf, MAX_PATH, "%s", gen_libvirt_cmd_path);
+
+// We should pass instance path parameter to perl script to determine file system type.
+// It will help to make right suggestion about used OS and generate libvirt for it.
     strncat(buf, " --instance_path ", MAX_PATH);
     strncat(buf, disk_path, MAX_PATH);
+
+
     if (strnlen(ramdiskId, CHAR_BUFFER_SIZE)) {
         strncat(buf, " --ramdisk", MAX_PATH);
     }
