@@ -84,7 +84,7 @@ GetOptions('ramdisk'        => sub { $use_ramdisk = 1; },
 
 # check if option "instance-path" specified and perform root file system check
 if ($instance_root_path) {
-	$parted_result = `parted -s $instance_root_path/root print`;
+	$parted_result = `parted -s $instance_root_path/root print | tail -n 2 | sed 's/ \+/:/g' | cut -d':' -f7 -s`;
 }
 
 if (!$instance_root_path || ($parted_result =~ m/ext[2-4]/)) { # if parameter didn't given or root system is linux extended partition
