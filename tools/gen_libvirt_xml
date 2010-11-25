@@ -75,6 +75,7 @@ $OUTPUT_AUTOFLUSH = 1; # no output buffering
 our $use_ramdisk = 0;
 our $use_ephemeral = 0;
 our $parted_result = "";
+our $instance_root_path="";
 
 # deal with command-line parameters
 GetOptions('ramdisk'        => sub { $use_ramdisk = 1; },

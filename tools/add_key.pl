@@ -96,7 +96,7 @@ if (!-f "$img" || !-x "$mounter") {
 }
 
 #first of all necessary to check if img is linux partition
-if ( `parted -s $img print | tail -n2 | sed \'s\/ \\+\/:\/g\' | cut -d\':\' -f6 -s` =~ m/ext[2-4]/ ) {
+if (!`parted -s $img print | tail -n2 | sed \'s\/ \\+\/:\/g\' | cut -d\':\' -f6 -s` =~ m/ext[2-4]/ ) {
     do_exit(0); #everything ok, we needn't add anything
 }
 
