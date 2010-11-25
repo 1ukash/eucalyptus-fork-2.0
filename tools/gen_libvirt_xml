@@ -74,19 +74,21 @@ $OUTPUT_AUTOFLUSH = 1; # no output buffering
 
 our $use_ramdisk = 0;
 our $use_ephemeral = 0;
-our $disk_path = "";
 our $parted_result = "";
+
 # deal with command-line parameters
 GetOptions('ramdisk'        => sub { $use_ramdisk = 1; },
-           'ephemeral'      => sub { $use_ephemeral = 1; }
+           'ephemeral'      => sub { $use_ephemeral = 1; },
+		   'instance-path:s' => \$instance_root_path
 		   ) or exit (1);
-if ($ARGV[0] eq "--instance_path")
-	$disk_path = $ARGV[1];
-$parted_result = `parted -s $disk_path/root print`;
 
-if (($parted_result =~ /ext3/) || ($parted_result =~ /ext4/))
-{
+# check if option "instance-path" specified and perform root file system check
+if ($instance_root_path) {
+	$parted_result = `parted -s $instance_root_path/root print`;
+}
 
+if (!$instance_root_path || ($parted_result =~ m/ext[2-4]/)) { # if parameter didn't given or root system is linux extended partition
+															   # then generate linux libvirt.xml
 print <<EOF;
 <domain type='xen' id='18'>
     <name>NAME</name>
@@ -134,11 +136,7 @@ print <<EOF;
     </devices>
 </domain>
 EOF
-}
-
-else
-# start for Windows or FreeBSD
-{
+} else { # generate standart HVM libvirt.xml for Windows or FreeBSD
 print <<EOF;
 <domain type='xen' id='18'>
     <name>NAME</name>
@@ -182,5 +180,4 @@ print <<EOF;
     </devices>
 </domain>
 EOF
-
 }
