@@ -1,6 +1,6 @@
-.so
-.bzr
-.o
+*.so
+*.bzr
+*.o
 clc/target
 clc/bin
 clc/deps
