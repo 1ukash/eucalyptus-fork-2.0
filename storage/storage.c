@@ -1220,7 +1220,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	    return e;		
 	  }
 	} else {
-	  if ((e=vrun ("mkfs.fat32 -F %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
+	  if ((e=vrun ("mkfs.msdos -F 32 %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
 	    logprintfl (EUCAINFO, "initialization of ephemeral disk (mkfs.fat32) at %s/ephemeral failed\n", rundir_path);
 	    sem_v(disk_sem);
 	    return e;
