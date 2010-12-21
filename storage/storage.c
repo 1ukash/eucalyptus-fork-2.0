@@ -1105,6 +1105,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
     char config_path  [BUFSIZE];
     char rundir_path  [BUFSIZE];
     int e = ERROR;
+    int isLinux = 0;
     
     logprintfl (EUCAINFO, "retrieving images for instance %s (disk limit=%lldMB)...\n", instanceId, total_disk_limit_mb);
     
@@ -1210,10 +1211,20 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	  sem_v (disk_sem);
 	  return e;
 	}
-	if ((e=vrun ("mkfs.ext3 -F %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
-	  logprintfl (EUCAINFO, "initialization of ephemeral disk (mkfs.ext3) at %s/ephemeral failed\n", rundir_path);
-	  sem_v (disk_sem);
-	  return e;		
+
+/*check partion type here*/
+	if (isLinux==1) {
+	  if ((e=vrun ("mkfs.ext3 -F %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
+	    logprintfl (EUCAINFO, "initialization of ephemeral disk (mkfs.ext3) at %s/ephemeral failed\n", rundir_path);
+	    sem_v (disk_sem);
+	    return e;		
+	  }
+	} else {
+	  if ((e=vrun ("mkfs.fat32 -F %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
+	    logprintfl (EUCAINFO, "initialization of ephemeral disk (mkfs.fat32) at %s/ephemeral failed\n", rundir_path);
+	    sem_v(disk_sem);
+	    return e;
+	  }
 	}
 	sem_v (disk_sem);
       }
