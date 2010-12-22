@@ -1212,6 +1212,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	  return e;
 	}
 
+	string result =	system("parted %s print");
 /*check partion type here*/
 	if (isLinux==1) {
 	  if ((e=vrun ("mkfs.ext3 -F %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
