@@ -1211,9 +1211,15 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	  sem_v (disk_sem);
 	  return e;
 	}
-
-//	int result =	system("parted %s print");
-	isLinux = true;
+//ToDo: run perl script image_mining and get result of partition
+//	int result =	system("parted %s/%s print");
+// image_name, image_path
+	char result [100];
+	char cmd [100];
+	snprintf(cmd, 100, "parted %s/%s print", image_path, image_name);
+	result = system_output (cmd);
+	if (strncmp(result,"ext",3))
+		isLinux = true;
 /*check partion type here*/
 	if (isLinux) {
 	  if ((e=vrun ("mkfs.ext3 -F %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
