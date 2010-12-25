@@ -1216,7 +1216,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 // image_name, image_path
 	char result [100];
 	char cmd [100];
-	snprintf(cmd, 100, "parted %s/%s print", image_path, image_name);
+	snprintf(cmd, 100, "parted %s/%s print | awk '{print $6}' | grep -v File | grep [:space:]", image_path, image_name);
 	result = system_output (cmd);
 	if (strncmp(result,"ext",3))
 		isLinux = true;
@@ -1228,7 +1228,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	    return e;		
 	  }
 	} else {
-	  if ((e=vrun ("mkfs.msdos -F 32 %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
+	  if ((e=vrun ("mkfs.msdos -F32 %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
 	    logprintfl (EUCAINFO, "initialization of ephemeral disk (mkfs.fat32) at %s/ephemeral failed\n", rundir_path);
 	    sem_v(disk_sem);
 	    return e;
