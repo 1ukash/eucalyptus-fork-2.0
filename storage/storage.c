@@ -1105,7 +1105,6 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
     char config_path  [BUFSIZE];
     char rundir_path  [BUFSIZE];
     int e = ERROR;
-    bool isLinux = false;
     
     logprintfl (EUCAINFO, "retrieving images for instance %s (disk limit=%lldMB)...\n", instanceId, total_disk_limit_mb);
     
@@ -1211,17 +1210,13 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	  sem_v (disk_sem);
 	  return e;
 	}
-//ToDo: run perl script image_mining and get result of partition
-//	int result =	system("parted %s/%s print");
-// image_name, image_path
-	char result [100];
+//TODO: run perl script image_mining and get result of partition
+	char* result = NULL;
 	char cmd [100];
 	snprintf(cmd, 100, "parted %s/%s print | awk '{print $6}' | grep -v File | grep [:space:]", image_path, image_name);
 	result = system_output (cmd);
-	if (strncmp(result,"ext",3))
-		isLinux = true;
 /*check partion type here*/
-	if (isLinux) {
+	if (strncmp(result,"ext",3)) {
 	  if ((e=vrun ("mkfs.ext3 -F %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
 	    logprintfl (EUCAINFO, "initialization of ephemeral disk (mkfs.ext3) at %s/ephemeral failed\n", rundir_path);
 	    sem_v (disk_sem);
@@ -1233,6 +1228,9 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	    sem_v(disk_sem);
 	    return e;
 	  }
+	}
+	if (result != NULL) {
+		free(result);
 	}
 	sem_v (disk_sem);
       }
