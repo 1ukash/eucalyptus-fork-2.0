@@ -1211,7 +1211,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	  return e;
 	}
 //TODO: run perl script image_mining and get result of partition
-	char result [100];
+	char* result = NULL;
 	char cmd [100];
 	snprintf(cmd, 100, "parted %s/%s print | awk '{print $6}' | grep -v File | grep [:space:]", image_path, image_name);
 	result = system_output (cmd);
@@ -1228,6 +1228,9 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	    sem_v(disk_sem);
 	    return e;
 	  }
+	}
+	if (result != NULL) {
+		free(result);
 	}
 	sem_v (disk_sem);
       }
