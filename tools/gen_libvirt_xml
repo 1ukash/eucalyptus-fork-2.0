@@ -160,14 +160,14 @@ print <<EOF;
 	<emulator>/usr/lib64/xen/bin/qemu-dm</emulator>
         <disk type='file'>
             <source file='BASEPATH/root'/>
-            <target dev='hda1' bus='ide'/>
+            <target dev='hda' bus='ide'/>
         </disk>
 EOF
 if ( $use_ephemeral ) {
 	print <<EOF;
 		<disk type='file'>
 			<source file='BASEPATH/ephemeral'/>
-			<target dev='hda2 bus='ide'/>
+			<target dev='hdb' bus='ide'/>
 		</disk>
 EOF
 }
