@@ -1211,8 +1211,14 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	  return e;
 	}
 //TODO: run perl script image_mining and get result of partition
-	char* result = NULL;
-	char cmd [100];
+	char * result = NULL;
+	char * cmd = NULL;
+
+	if ( (cmd = malloc(MAX_PATH * sizeof(char))) != 0) {
+      logprintfl (EUCAERROR, "Failed memory allocation\n");
+	  return -1; //TODO obtain error code
+	}
+
 	snprintf(cmd, 100, "parted %s/%s print | awk '{print $6}' | grep -v File | grep [:space:]", image_path, image_name);
 	result = system_output (cmd);
 	logprintfl (EUCAINFO, "System output for image mining is: %s\n", result);
@@ -1235,6 +1241,9 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	}
 	if (result != NULL) {
 		free(result);
+	}
+	if (cmd != NULL) {
+		free(cmd);
 	}
 	sem_v (disk_sem);
       }
