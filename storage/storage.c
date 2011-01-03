@@ -1215,14 +1215,18 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	char cmd [100];
 	snprintf(cmd, 100, "parted %s/%s print | awk '{print $6}' | grep -v File | grep [:space:]", image_path, image_name);
 	result = system_output (cmd);
+	logprintfl (EUCAINFO, "System output for image mining is: %s\n", result);
+
 /*check partion type here*/
 	if (strncmp(result,"ext",3)) {
+	  logprintfl (EUCAINFO, "Image is linux, domain is pv, additional disk is ext3 \n", result);
 	  if ((e=vrun ("mkfs.ext3 -F %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
 	    logprintfl (EUCAINFO, "initialization of ephemeral disk (mkfs.ext3) at %s/ephemeral failed\n", rundir_path);
 	    sem_v (disk_sem);
 	    return e;		
 	  }
 	} else {
+	  logprintfl (EUCAINFO, "Image in't linux, domain is hvm, additional disk is vfat \n", result);
 	  if ((e=vrun ("mkfs.msdos -F32 %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
 	    logprintfl (EUCAINFO, "initialization of ephemeral disk (mkfs.fat32) at %s/ephemeral failed\n", rundir_path);
 	    sem_v(disk_sem);
