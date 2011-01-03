@@ -73,10 +73,6 @@ typedef unsigned char boolean;
 #define MAX_PATH 4096
 #endif
 
-#ifndef LINE_BUF_SIZE
-#define LINE_BUF_SIZE 256
-#endif
-
 #define TIMERSTART(a) double a;                                 \
   {                                                             \
     struct timeval UBERSTART;                                   \
@@ -183,7 +179,6 @@ int daemonrun(char *cmd, char *pidfile);
 int daemonmaintain(char *cmd, char *procname, char *pidfile, int force, char *rootwrap);
 int run (const char * arg1, ...);
 int vrun (const char * fmt, ...);
-char * vrun_output(const cgar * fmt, ...);
 int cat (const char * file_name);
 int logcat (int debug_level, const char * file_name);
 int touch (const char * path);
