@@ -983,6 +983,52 @@ int vrun (const char * fmt, ...)
 	return e;
 }
 
+/* given printf-style arguments, run the resulting string in the shell and return the result output */
+char * vrun_output(const cgar * fmt, ...) {
+  FILE *fp = NULL;
+  char * output = NULL;
+
+  char tmp [LINE_BUF_SIZE];
+
+  char buf [MAX_PATH];
+  va_list ap;
+  va_start (ap, fmt);
+  vsnprintf (buf, MAX_PATH, fmt, ap);
+  va_end (ap);
+
+  if ( (output = malloc(MAX_PATH * sizeof(char))) != 0) {
+	logprintfl (EUCAERROR, "Failed to allocate memory for out buf in vrun_output()\n");
+    return NULL;
+  }
+
+  /* Open the pipe for reading. */
+  fp = popen(buf, "r");
+  logprintfl (EUCAINFO, "vrun_output(): [%s]\n", buf);
+
+  if (fp == NULL) {
+	logprintfl (EUCAERROR, "Failed to create pipe vrun_output()\n");
+    return NULL;
+  }
+
+  void * r = NULL;
+  /* Read the output a line and concatenate it to result with linebreak delimeter */
+  while(1) {
+	r = fgets(tmp, sizeof(tmp), fp);
+	if (r != NULL) {
+    	strcat(result, tmp);
+    	strcat(result, "\n");
+	} else {
+		break;
+	}
+  }
+
+  /* close */
+  pclose(fp);
+
+  logprintfl (EUCAINFO, "vrun_output(): read output [%s]\n", result);
+  return result;
+}
+
 /* given a file path, prints it to stdout */
 int cat (const char * file_name)
 {
