@@ -1219,7 +1219,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	  return -1; //TODO obtain error code
 	}
 
-	snprintf(cmd, 100, "parted -s %s print | tail -n 2 | sed 's/ \\+/:/g' | cut -d':' -f6 -s", image_path);
+	snprintf(cmd, MAX_PATH, "parted -s %s print | tail -n 2 | sed 's/ \\+/:/g' | cut -d':' -f6 -s", image_path);
 	result = system_output (cmd);
 	logprintfl (EUCAINFO, "System output for image mining is %s, command is %s\n", result, cmd);
 
