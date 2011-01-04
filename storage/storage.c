@@ -1214,7 +1214,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	char * result = NULL;
 	char * cmd = NULL;
 
-	if ( (cmd = malloc(MAX_PATH * sizeof(char))) != 0) {
+	if ( (cmd = malloc(MAX_PATH * sizeof(char))) == NULL) {
       logprintfl (EUCAERROR, "Failed memory allocation\n");
 	  return -1; //TODO obtain error code
 	}
