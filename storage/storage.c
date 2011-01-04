@@ -1224,7 +1224,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 	logprintfl (EUCAINFO, "System output for image mining is %s, command is %s\n", result, cmd);
 
 /*check partion type here*/
-	if (!strncmp(result,"ext",3)) {
+	if (result == NULL || strncmp(result, "ext",3) == 0) {
 	  logprintfl (EUCAINFO, "Image is linux, domain is pv, additional disk is ext3 \n", result);
 	  if ((e=vrun ("mkfs.ext3 -F %s/ephemeral >/dev/null 2>&1", rundir_path)) != 0) {
 	    logprintfl (EUCAINFO, "initialization of ephemeral disk (mkfs.ext3) at %s/ephemeral failed\n", rundir_path);
