@@ -1221,7 +1221,7 @@ int scMakeInstanceImage (char *euca_home, char *userId, char *imageId, char *ima
 
 	snprintf(cmd, 100, "parted %s/%s print | awk '{print $6}' | grep -v File | grep [:space:]", image_path, image_name);
 	result = system_output (cmd);
-	logprintfl (EUCAINFO, "System output for image mining is: %s\n", result);
+	logprintfl (EUCAINFO, "System output for image mining is %s, command is %s\n", result, cmd);
 
 /*check partion type here*/
 	if (strncmp(result,"ext",3)) {
