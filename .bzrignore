@@ -26,3 +26,6 @@ clc/modules/wsstack/build
 clc/modules/www/build
 clc/modules/www/build-war
 
+.git
+.gitignore
+bzr_repository_data.tar.gz
