@@ -211,6 +211,7 @@ done
 export EUCALYPTUS="${NEW_EUCA}"
 UP_LOG=${NEW_EUCA}/var/log/eucalyptus/upgrade.log
 if [ "${NEW_EUCA_VERSION}" == "${OLD_EUCA_VERSION}" ]; then SAME_VERSION="true"; fi
+if [ "${NEW_EUCA_VERSION}" == "2.0.3" -a "${OLD_EUCA_VERSION}" == "2.0.2" ]; then SAME_VERSION="true"; fi
 
 ## NOTE: Add an externalized v.old -> v.new upgrade-path check.
 log "#                           UPGRADE INFORMATION\n#================================================================================" 

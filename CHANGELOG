@@ -1,3 +1,24 @@
+*Fri Apr 29 2011 Eucalyptus Systems (support@eucalyptus.com)
+    * Version 2.0.3
+    * Security release.
+    * Fixes launchpad bugs:
+	* #746101
+
+    fixes include:
+	* defense against XML Signature Element Wrapping attacks
+	* replay detection improvements in CLC
+
+*Fri Apr 29 2011 Eucalyptus Systems (support@eucalyptus.com)
+    * Version 2.0.2
+    * Security release.
+    * Fixes launchpad bugs:
+	* #675372
+
+    fixes include:
+	* password recovery functionality
+	* enabling/confirming users by admin only
+	* various Web UI security enhancements
+
 *Wed Oct 20 2010 Eucalyptus Systems (support@eucalyptus.com)
     * Version 2.0.1
     * Bug fix minor release.

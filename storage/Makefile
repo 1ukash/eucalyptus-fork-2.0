@@ -4,7 +4,7 @@
 
 include ../Makedefs
 
-STORAGE_LIBS = ${LIBS} -lcurl
+STORAGE_LIBS = ${LIBS} -lcurl -lssl -lcrypto
 
 all: storage.o walrus.o Wclient
 

@@ -18,6 +18,7 @@
 %global euca_iscsi_client open-iscsi
 %global euca_iscsi_server tgt
 %global euca_build_req vlan
+%global euca_which util-linux
 %endif
 %if %is_centos
 %global euca_libvirt libvirt >= 0.6
@@ -26,6 +27,7 @@
 %global euca_java    java-sdk >= 1.6.0
 %global euca_iscsi_client iscsi-initiator-utils
 %global euca_iscsi_server scsi-target-utils
+%global euca_which which
 %endif
 %if %is_fedora
 %global euca_libvirt libvirt
@@ -34,19 +36,19 @@
 %global euca_java    java-devel >= 1:1.6.0
 %global euca_iscsi_client iscsi-initiator-utils
 %global euca_iscsi_server scsi-target-utils
+%global euca_which which
 %endif
 
-%if %is_centos
 BuildRoot:     %{_tmppath}/%{name}-%{version}-root
-%endif
 Summary:       Elastic Utility Computing Architecture
 Name:          eucalyptus
-Version:       2.0.2
-Release:       1
+Version:       2.0.3
+Release:       0.1%{?dist}
 License:       GPLv3
 Group:         Applications/System
 BuildRequires: gcc, make, %{euca_libvirt}-devel, %{euca_libvirt}, %{euca_libcurl}, ant, ant-nodeps, %{euca_java}, euca-axis2c >= 1.6.0, euca-rampartc >= 1.3.0, %{euca_iscsi_client}
 Requires:      %{euca_build_req}, perl-Crypt-OpenSSL-RSA, perl-Crypt-OpenSSL-Random
+Requires:      %{euca_which}
 
 Source:        http://eucalyptussoftware.com/downloads/releases/eucalyptus-%{version}.tar.gz
 URL:           http://open.eucalyptus.com
@@ -63,7 +65,11 @@ eucalyptus-nc (or all of them).
 
 %package common-java
 Summary:      Elastic Utility Computing Architecture - ws java stack 
+<<<<<<< TREE
 Requires:     eucalyptus = 2.0.2, %{euca_java}, lvm2
+=======
+Requires:     %{name} = %{version}-%{release}, %{euca_java}, lvm2
+>>>>>>> MERGE-SOURCE
 Group:        Applications/System
 
 %description common-java
@@ -76,7 +82,11 @@ This package contains the java WS stack.
 
 %package walrus
 Summary:      Elastic Utility Computing Architecture - walrus
+<<<<<<< TREE
 Requires:     eucalyptus-common-java = 2.0.2, %{euca_java}, lvm2
+=======
+Requires:     %{name}-common-java = %{version}-%{release}, %{euca_java}, lvm2
+>>>>>>> MERGE-SOURCE
 Group:        Applications/System
 
 %description walrus
@@ -91,7 +101,11 @@ cloud controller.
 
 %package sc
 Summary:      Elastic Utility Computing Architecture - storage controller
+<<<<<<< TREE
 Requires:     eucalyptus-common-java = 2.0.2, %{euca_java}, lvm2, vblade, %{euca_iscsi_server}
+=======
+Requires:     %{name}-common-java = %{version}-%{release}, %{euca_java}, lvm2, vblade, %{euca_iscsi_server}
+>>>>>>> MERGE-SOURCE
 Group:        Applications/System
 
 %description sc
@@ -106,7 +120,11 @@ alongside the cluster-controller.
 
 %package cloud
 Summary:      Elastic Utility Computing Architecture - cloud controller
+<<<<<<< TREE
 Requires:     eucalyptus-common-java = 2.0.2, %{euca_java}, lvm2
+=======
+Requires:     %{name}-common-java = %{version}-%{release}, %{euca_java}, lvm2
+>>>>>>> MERGE-SOURCE
 Group:        Applications/System
 
 %description cloud
@@ -121,7 +139,11 @@ the cloud clients.
 
 %package cc
 Summary:      Elastic Utility Computing Architecture - cluster controller
+<<<<<<< TREE
 Requires:     eucalyptus = 2.0.2, eucalyptus-gl = 2.0.2, %{euca_httpd}, euca-axis2c >= 1.6.0, euca-rampartc >= 1.3.0, iptables, bridge-utils, %{euca_dhcp}, vtun
+=======
+Requires:     %{name} = %{version}-%{release}, %{name}-gl = %{version}-%{release}, %{euca_httpd}, euca-axis2c >= 1.6.0, euca-rampartc >= 1.3.0-4, iptables, bridge-utils, %{euca_dhcp}, vtun
+>>>>>>> MERGE-SOURCE
 Group:        Applications/System
 
 %description cc
@@ -135,7 +157,11 @@ handles multiple node controllers.
 
 %package nc
 Summary:      Elastic Utility Computing Architecture - node controller
+<<<<<<< TREE
 Requires:     eucalyptus = 2.0.2, eucalyptus-gl = 2.0.2, %{euca_httpd}, euca-axis2c >= 1.6.0, euca-rampartc >= 1.3.0, bridge-utils, %{euca_libvirt}, %{euca_curl}, %{euca_hypervisor}, %{euca_iscsi_client}
+=======
+Requires:     %{name} = %{version}-%{release}, %{name}-gl = %{version}-%{release}, %{euca_httpd}, euca-axis2c >= 1.6.0, euca-rampartc >= 1.3.0-4, bridge-utils, %{euca_libvirt}, %{euca_curl}, %{euca_hypervisor}, %{euca_iscsi_client}
+>>>>>>> MERGE-SOURCE
 Group:        Applications/System
 
 %description nc
@@ -149,7 +175,11 @@ components that handles the instances.
 
 %package gl
 Summary:      Elastic Utility Computing Architecture - log service
+<<<<<<< TREE
 Requires:     eucalyptus = 2.0.2, %{euca_httpd}, euca-axis2c >= 1.6.0, euca-rampartc >= 1.3.0
+=======
+Requires:     %{name} = %{version}-%{release}, %{euca_httpd}, euca-axis2c >= 1.6.0, euca-rampartc >= 1.3.0-4
+>>>>>>> MERGE-SOURCE
 Group:        Applications/System
 
 %description gl
@@ -161,17 +191,29 @@ elastic computing service that is interface-compatible with Amazon's EC2.
 This package contains the internal log service of eucalyptus.
 
 %prep
-%setup -n eucalyptus-%{version}
+%setup -q
 
 %build
 export DESTDIR=$RPM_BUILD_ROOT
+
+# Guess where java lives
+if [ -z "$JAVA_HOME" ]; then
+    # OpenJDK: /usr/lib/jvm/java-1.6.0-openjdk*/jre/bin/java (strip last 3)
+    export JAVA_HOME=`readlink -f /usr/bin/java | rev | cut -d/ -f4- | rev`
+fi
+if [ ! -d "$JAVA_HOME/include" ]; then
+    # Oracle JDK: /usr/java/jdk_1.6.0_23/bin/java (strip last 2)
+    export JAVA_HOME=`readlink -f /usr/bin/java | rev | cut -d/ -f3- | rev`
+fi
+
 ./configure --with-axis2=/opt/packages/axis2-1.4 --with-axis2c=/opt/euca-axis2c --enable-debug --prefix=/
 cd clc
 make deps
 cd ..
-make 2> err.log > out.log
+make
 
 %install
+[ ${RPM_BUILD_ROOT} != "/" ] && rm -rf ${RPM_BUILD_ROOT}
 export DESTDIR=$RPM_BUILD_ROOT
 make install
 #CWD=`pwd`
@@ -180,10 +222,7 @@ make install
 #cd $CWD
 
 %clean
-export DESTDIR=$RPM_BUILD_ROOT
-make uninstall
 [ ${RPM_BUILD_ROOT} != "/" ] && rm -rf ${RPM_BUILD_ROOT}
-rm -rf $RPM_BUILD_DIR/eucalyptus-%{version}
 
 %files
 %doc LICENSE INSTALL README CHANGELOG
@@ -224,14 +263,14 @@ rm -rf $RPM_BUILD_DIR/eucalyptus-%{version}
 /usr/sbin/euca-register-cluster
 /usr/sbin/euca-register-storage-controller
 /usr/sbin/euca-register-walrus
-/usr/sbin/euca_admin/__init__.py
-/usr/sbin/euca_admin/clusters.py
-/usr/sbin/euca_admin/generic.py
-/usr/sbin/euca_admin/groups.py
-/usr/sbin/euca_admin/properties.py
-/usr/sbin/euca_admin/storagecontrollers.py
-/usr/sbin/euca_admin/users.py
-/usr/sbin/euca_admin/walruses.py
+/usr/sbin/euca_admin/__init__.py*
+/usr/sbin/euca_admin/clusters.py*
+/usr/sbin/euca_admin/generic.py*
+/usr/sbin/euca_admin/groups.py*
+/usr/sbin/euca_admin/properties.py*
+/usr/sbin/euca_admin/storagecontrollers.py*
+/usr/sbin/euca_admin/users.py*
+/usr/sbin/euca_admin/walruses.py*
 
 #%files common-java -f jar_list
 %files common-java
@@ -562,6 +601,11 @@ then
 fi
 
 %changelog
+* Fri Apr  8 2011 Eucalyptus Release Engineering <support@open.eucalyptus.com> - 2.0.3-0.1
+- Fixed SOAP interface vulnerability [LP:746101]
+- Depend on "which"
+- Added .pyc, .pyo files to file lists
+
 * Fri Feb 12 2010 Eucalyptus Systems <support@open.eucalyptus.com>
 - 1.6.2
 - Thanks to Garrett Holmstrom and cloud@lists.fedoraproject.org for

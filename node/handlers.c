@@ -390,17 +390,17 @@ get_instance_xml(	const char *gen_libvirt_cmd_path,
 
 
     if (strnlen(ramdiskId, CHAR_BUFFER_SIZE)) {
-        strncat(buf, " --ramdisk", MAX_PATH);
+        strncat(buf, " --ramdisk", MAX_PATH - strlen(buf) - 1);
     }
     if (use_virtio_net) {
-        strncat(buf, " --virtionet", MAX_PATH);
+        strncat(buf, " --virtionet", MAX_PATH - strlen(buf) - 1);
     }
     if (use_virtio_root) {
-        strncat(buf, " --virtioroot", MAX_PATH);
+        strncat(buf, " --virtioroot", MAX_PATH - strlen(buf) - 1);
     }
     
     if (params->disk > 0) { /* TODO: get this info from scMakeImage */
-        strncat (buf, " --ephemeral", MAX_PATH);
+        strncat (buf, " --ephemeral", MAX_PATH - strlen(buf) - 1);
     }
     * xml = system_output (buf);
     if ( ( * xml ) == NULL ) {
@@ -519,7 +519,7 @@ void *startup_thread (void * arg)
 {
     ncInstance * instance = (ncInstance *)arg;
     virDomainPtr dom = NULL;
-    char * disk_path, * xml=NULL;
+    char *disk_path=NULL, *xml=NULL;
     char *brname=NULL;
     int error, i;
     
@@ -550,16 +550,19 @@ void *startup_thread (void * arg)
         logprintfl (EUCAFATAL, "Failed to prepare images for instance %s (error=%d)\n", instance->instanceId, error);
         change_state (instance, SHUTOFF);
 	if (brname) free(brname);
+        if (disk_path) free(disk_path);
         return NULL;
     }
-	if (instance->state==TEARDOWN) { // timed out in STAGING
-		if (brname) free(brname);
-        return NULL;
-	}
+    if (instance->state==TEARDOWN) { // timed out in STAGING
+            if (disk_path) free(disk_path);
+            if (brname) free(brname);
+            return NULL;
+    }
     if (instance->state==CANCELED) {
         logprintfl (EUCAFATAL, "Startup of instance %s was cancelled\n", instance->instanceId);
         change_state (instance, SHUTOFF);
 	if (brname) free(brname);
+        if (disk_path) free(disk_path);
         return NULL;
     }
     
@@ -576,6 +579,7 @@ void *startup_thread (void * arg)
                               &xml);
 
     if (brname) free(brname);
+    if (disk_path) free(disk_path);
     if (xml) logprintfl (EUCADEBUG2, "libvirt XML config:\n%s\n", xml);
     if (error) {
         logprintfl (EUCAFATAL, "Failed to create libvirt XML config for instance %s\n", instance->instanceId);

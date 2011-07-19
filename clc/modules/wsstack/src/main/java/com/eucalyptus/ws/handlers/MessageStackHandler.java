@@ -64,6 +64,7 @@
 package com.eucalyptus.ws.handlers;
 
 import java.io.IOException;
+import javax.security.auth.login.LoginException;
 import java.nio.channels.ClosedChannelException;
 
 import org.apache.log4j.Logger;
@@ -74,9 +75,11 @@ import org.jboss.netty.channel.ChannelUpstreamHandler;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import com.eucalyptus.system.LogLevels;
 import com.eucalyptus.util.LogUtil;
+import com.eucalyptus.ws.WebServicesException;
 
 public abstract class MessageStackHandler implements ChannelDownstreamHandler, ChannelUpstreamHandler {
   private static Logger LOG = Logger.getLogger( MessageStackHandler.class );
@@ -125,10 +128,12 @@ public abstract class MessageStackHandler implements ChannelDownstreamHandler, C
       final MessageEvent msgEvent = ( MessageEvent ) channelEvent;
       try {
         this.incomingMessage( channelHandlerContext, msgEvent );
+      } catch ( LoginException e ) {                                                                                                         
+	 LOG.error( e, e );                                                                                                                   
+	 throw new WebServicesException( e.getMessage( ), HttpResponseStatus.FORBIDDEN );                                                     
       } catch ( Throwable e ) {
         LOG.error( e, e );
-        Channels.fireExceptionCaught( channelHandlerContext, e );
-        return;
+	throw new WebServicesException( e.getMessage( ), HttpResponseStatus.BAD_REQUEST );
       } 
     }
     channelHandlerContext.sendUpstream( channelEvent );

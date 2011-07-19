@@ -373,13 +373,13 @@ static int ok_to_cache (const char * cached_path, const long long file_size_byte
 
 static long long init_cache (const char * cache_path)
 {
-    long long total_size = 0;
+    long long total_size_b = 0;
     
     logprintfl (EUCAINFO, "checking the integrity of the cache directory (%s)\n", cache_path);
     
     if (cache_path==NULL) {
         logprintfl (EUCAINFO, "no cache directory yet\n");
-        return total_size;
+        return total_size_b;
     }
 
     struct stat mystat;
@@ -387,7 +387,7 @@ static long long init_cache (const char * cache_path)
         logprintfl (EUCAFATAL, "error: could not stat %s\n", cache_path);
         return -1;
     }
-    total_size += mystat.st_size;
+    total_size_b += mystat.st_size;
    
     DIR * cache_dir;
     if ((cache_dir=opendir(cache_path))==NULL) {
@@ -399,7 +399,7 @@ static long long init_cache (const char * cache_path)
     while ((cache_dir_entry=readdir(cache_dir))!=NULL) {
         char * image_name = cache_dir_entry->d_name;
         char image_path [BUFSIZE];
-        int image_size = 0;
+        long long image_size_b = 0;
         int image_files = 0;
 
         if (!strcmp(".", image_name) || 
@@ -418,7 +418,7 @@ static long long init_cache (const char * cache_path)
 	    closedir(image_dir);
             continue;
         }
-        image_size += mystat.st_size;
+        image_size_b += mystat.st_size;
         
         /* make sure that image directory contains only two files: one
          * named X and another X-digest, also add up their sizes */
@@ -445,7 +445,7 @@ static long long init_cache (const char * cache_path)
                 logprintfl (EUCAERROR, "error: empty file among cached images in %s\n", filepath);
                 break;
             }
-            image_size += mystat.st_size;
+            image_size_b += mystat.st_size;
             
             char * suffix;
             if ((suffix=strstr (name, "-digest"))==NULL) {
@@ -470,10 +470,10 @@ static long long init_cache (const char * cache_path)
             } else {
                 char filepath [BUFSIZE];
                 snprintf (filepath, BUFSIZE, "%s/%s", image_path, X);
-                if (image_size>0) {
-                    logprintfl (EUCAINFO, "- cached image %s directory, size=%d\n", image_name, image_size);
-                    total_size += image_size;
-                    add_to_cache (filepath, image_size);
+                if (image_size_b>0) {
+                    logprintfl (EUCAINFO, "- cached image %s directory, size=%lld\n", image_name, image_size_b);
+                    total_size_b += image_size_b;
+                    add_to_cache (filepath, image_size_b);
                 } else {
                     logprintfl (EUCAWARN, "warning: empty cached image directory %s\n", image_path);
                 }
@@ -482,7 +482,7 @@ static long long init_cache (const char * cache_path)
     }
     closedir (cache_dir);
 
-    return total_size;
+    return total_size_b;
 }
 
 #define F1 "/tmp/improbable-cache-file-1"
