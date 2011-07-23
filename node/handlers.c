@@ -102,7 +102,7 @@ extern struct handlers kvm_libvirt_handlers;
 extern struct handlers default_libvirt_handlers;
 
 const int staging_cleanup_threshold = 60 * 60 * 2; /* after this many seconds any STAGING domains will be cleaned up */
-const int booting_cleanup_threshold = 60; /* after this many seconds any BOOTING domains will be cleaned up */
+const int booting_cleanup_threshold = 60 * 10; /* after this many seconds any BOOTING domains will be cleaned up */
 const int teardown_state_duration = 180; /* after this many seconds in TEARDOWN state (no resources), we'll forget about the instance */
 
 // a NULL-terminated array of available handlers
